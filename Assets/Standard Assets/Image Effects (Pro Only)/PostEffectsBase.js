@@ -1,6 +1,8 @@
 
 #pragma strict
 
+import System.Collections.Generic;
+
 @script ExecuteInEditMode
 @script RequireComponent (Camera)
 
@@ -8,7 +10,9 @@ class PostEffectsBase extends MonoBehaviour {
 	protected var supportHDRTextures : boolean = true;
 	protected var supportDX11 : boolean = false;
 	protected var isSupported : boolean = true;
-	
+
+	protected var createdMaterials : List.<Material> = new List.<Material>();
+
 	function CheckShaderAndCreateMaterial (s : Shader, m2Create : Material) : Material {
 		if (!s) { 
 			Debug.Log("Missing shader in " + this.ToString ());
@@ -26,6 +30,7 @@ class PostEffectsBase extends MonoBehaviour {
 		}
 		else {
 			m2Create = new Material (s);	
+			createdMaterials.Add(m2Create);
 			m2Create.hideFlags = HideFlags.DontSave;		
 			if (m2Create) 
 				return m2Create;
@@ -47,6 +52,7 @@ class PostEffectsBase extends MonoBehaviour {
 		}
 		else {
 			m2Create = new Material (s);	
+			createdMaterials.Add(m2Create);
 			m2Create.hideFlags = HideFlags.DontSave;		
 			if (m2Create) 
 				return m2Create;
@@ -57,6 +63,22 @@ class PostEffectsBase extends MonoBehaviour {
 	function OnEnable() {
 		isSupported = true;
 	}	
+
+	function OnDestroy() {
+		RemoveCreatedMaterials();
+	}
+
+	function RemoveCreatedMaterials() {
+		while (createdMaterials.Count > 0) {
+			var mat : Material = createdMaterials[0];
+			createdMaterials.RemoveAt(0);
+#if UNITY_EDITOR
+			DestroyImmediate(mat);
+#else
+			Destroy(mat);
+#endif
+		}
+	}
 
 	function CheckSupport () : boolean {
 		return CheckSupport (false);
